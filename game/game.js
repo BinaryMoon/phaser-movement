@@ -411,93 +411,67 @@ Math.smooth = function( current, target, smoothing = 10 ) {
 
 }
 
-Game.Utils.SkiAnimation = {
+Game.Utils.PlayerAnimation = {
 
-	run: function( skier ) {
+	do: function( player ) {
 
-		if ( ! skier.alive ) {
+		if ( ! player.alive ) {
 			return;
 		}
 
-		this.walk( skier );
-
-		skier.animations.play( skier.animation );
-
-	},
-
-
-	/**
-	 * Walking around town.
-	 *
-	 * @param  {[type]} skier [description]
-	 * @return {[type]}       [description]
-	 */
-	walk: function( skier ) {
-
-		skier.animation = 'walk-down';
+		player.animation = 'walk-down';
 
 		var speed = 10;
 
-		if ( skier.body.velocity.y > speed ) {
-			skier.animation = 'walk-down';
+		if ( player.body.velocity.y > speed ) {
+			player.animation = 'walk-down';
 		}
 
-		if ( skier.body.velocity.y < -speed ) {
-			skier.animation = 'walk-up';
+		if ( player.body.velocity.y < -speed ) {
+			player.animation = 'walk-up';
 		}
 
-		if ( skier.body.velocity.x > speed ) {
-			skier.animation = 'walk-right';
+		if ( player.body.velocity.x > speed ) {
+			player.animation = 'walk-right';
 		}
 
-		if ( skier.body.velocity.x < -speed ) {
-			skier.animation = 'walk-left';
+		if ( player.body.velocity.x < -speed ) {
+			player.animation = 'walk-left';
 		}
+
+		player.animations.play( player.animation );
 
 	},
-
 
 };
 
-Game.Utils.SkiPhysics = {
+Game.Utils.PlayerPhysics = {
 
-	run: function( skier ) {
+	do: function( player ) {
 
-		if ( ! skier.alive ) {
+		if ( ! player.alive ) {
 			return;
 		}
 
-		this.walk( skier );
-
-	},
-
-
-	/**
-	 * Walking around town.
-	 *
-	 * @param  {Skier} skier The skier to apply the physics to.
-	 */
-	walk: function( skier ) {
-
 		var speed = 4;
 
-		if ( skier.controls.down ) {
+		if ( player.controls.down ) {
 
-			skier.body.velocity.y += speed;
+			player.body.velocity.y += speed;
 
-		} else if ( skier.controls.up ) {
+		} else if ( player.controls.up ) {
 
-			skier.body.velocity.y -= speed;
+			player.body.velocity.y -= speed;
 
 		}
 
-		if ( skier.controls.left ) {
+		if ( player.controls.left ) {
 
-			skier.body.velocity.x -= speed;
+			player.body.velocity.x -= speed;
 
-		} else if ( skier.controls.right ) {
+		} else if ( player.controls.right ) {
 
-			skier.body.velocity.x += speed;
+			player.body.velocity.x += speed;
 
 		}
 
@@ -508,12 +482,12 @@ Game.Utils.SkiPhysics = {
 
 // Prefabs
 /**
- * Skier object
+ * Player object
  * Controls all skiers, their physics, and their properties.
  */
-Game.Prefabs.Skier = function( game, x, y, group ) {
+Game.Prefabs.Player = function( game, x, y, group ) {
 
-	// Setup Skier.
+	// Setup Player.
 	//
 	// This uses a null display object. This allows me to apply physics to
 	// the skier independently of the character display image. I can then
@@ -521,7 +495,7 @@ Game.Prefabs.Skier = function( game, x, y, group ) {
 	// things looking nice and crisp whilst having accurate physics.
 	Phaser.Sprite.call( this, game, x, y, 'player' );
 
-	// Setup Skier Physics.
+	// Setup Player Physics.
 	game.physics.enable( this, Phaser.Physics.ARCADE );
 
 	// No gravity - it's a top down game and the game physics take care of downward motion.
@@ -535,7 +509,7 @@ Game.Prefabs.Skier = function( game, x, y, group ) {
 
 	this.body.setSize( 8, 8, 2, 5 );
 
-	// Skier display image.
+	// Player display image.
 	this.anchor.setTo( 0.5, 1 );
 
 	// animations.
@@ -544,7 +518,7 @@ Game.Prefabs.Skier = function( game, x, y, group ) {
 	this.animations.add( 'walk-down', [ 0, 1, 0, 2 ], 4, true );
 	this.animations.add( 'walk-up', [ 3, 4, 3, 5 ], 4, true );
 
-	// Add Skier.
+	// Add Player.
 	group.add( this );
 
 
@@ -559,41 +533,45 @@ Game.Prefabs.Skier = function( game, x, y, group ) {
 
 };
 
-Game.Prefabs.Skier.prototype = Object.create( Phaser.Sprite.prototype );
+Game.Prefabs.Player.prototype = Object.create( Phaser.Sprite.prototype );
 
-Game.Prefabs.Skier.constructor = Game.Prefabs.Skier;
-
-
-/**
- * Player movement stub. Is used in skier-player
- */
-Game.Prefabs.Skier.prototype.move = function() {};
+Game.Prefabs.Player.constructor = Game.Prefabs.Player;
 
 
 /**
- * Player physics stub. Is used in skier-player
+ * Move player
  */
-Game.Prefabs.Skier.prototype.physics = function() {};
+Game.Prefabs.Player.prototype.controller = function() {
+
+	// Controls.
+	this.controls.up = Game.Utils.Controls.cursor.up.isDown;
+	this.controls.down = Game.Utils.Controls.cursor.down.isDown;
+	this.controls.left = Game.Utils.Controls.cursor.left.isDown;
+	this.controls.right = Game.Utils.Controls.cursor.right.isDown;
+	this.controls.action = Game.Utils.Controls.action.isDown;
+
+};
 
 
 /**
- * Update Skier Positions.
+ * Update Player Positions.
  */
-Game.Prefabs.Skier.prototype.update = function() {
+Game.Prefabs.Player.prototype.update = function() {
 
 	// Update movement and physics.
-	this.move();
-	this.physics();
+	this.controller();
+
+	game.physics.arcade.collide( this, Game.Utils.Map.layer );
 
 	if ( this.alive ) {
 
-		Game.Utils.SkiPhysics.run( this );
+		Game.Utils.PlayerPhysics.do( this );
 
 	}
 
-	Game.Utils.SkiAnimation.run( this );
+	Game.Utils.PlayerAnimation.do( this );
 
-	// Update Skier physics.
+	// Update Player physics.
 	this.do_physics();
 
 	Phaser.Sprite.prototype.update.call( this );
@@ -606,7 +584,7 @@ Game.Prefabs.Skier.prototype.update = function() {
 /**
  * Square off the skiers position so that it is always on a round pixel value.
  */
-Game.Prefabs.Skier.prototype.position_squared = function() {
+Game.Prefabs.Player.prototype.position_squared = function() {
 
 	// Update skier display image position.
 	// this.x = Math.round( this.x );
@@ -619,7 +597,7 @@ Game.Prefabs.Skier.prototype.position_squared = function() {
  * Update player physics properties.
  * Takes care of friction, and jumping off of things.
  */
-Game.Prefabs.Skier.prototype.do_physics = function() {
+Game.Prefabs.Player.prototype.do_physics = function() {
 
 	// Quit if not currently active.
 	if ( ! this.alive ) {
@@ -636,7 +614,7 @@ Game.Prefabs.Skier.prototype.do_physics = function() {
  *
  * @return {[type]} [description]
  */
-Game.Prefabs.Skier.prototype.do_physics_walking = function() {
+Game.Prefabs.Player.prototype.do_physics_walking = function() {
 
 	// Use a reasonably high friction value to allow for a bit of sliding on the snow.
 	// Closer to 1 = more sliding.
@@ -655,7 +633,7 @@ Game.Prefabs.Skier.prototype.do_physics_walking = function() {
  *
  * Also physics don't affect it.
  */
-Game.Prefabs.Skier.prototype.disable = function() {
+Game.Prefabs.Player.prototype.disable = function() {
 
 	this.alive = false;
 	this.body.enable = false;
@@ -666,49 +644,10 @@ Game.Prefabs.Skier.prototype.disable = function() {
 /**
  * Re-enable a skier so it once again skis the slopes.
  */
-Game.Prefabs.Skier.prototype.enable = function() {
+Game.Prefabs.Player.prototype.enable = function() {
 
 	this.alive = true;
 	this.body.enable = true;
-
-};
-
-
-
-Game.Prefabs.Player = function( game, x, y, group ) {
-
-	// Call parent class.
-	Game.Prefabs.Skier.call( this, game, x, y, group );
-
-};
-
-
-Game.Prefabs.Player.prototype = Object.create( Game.Prefabs.Skier.prototype );
-
-Game.Prefabs.Player.constructor = Game.Prefabs.Player;
-
-
-/**
- * Move player
- */
-Game.Prefabs.Player.prototype.move = function() {
-
-	// Controls.
-	this.controls.up = Game.Utils.Controls.cursor.up.isDown;
-	this.controls.down = Game.Utils.Controls.cursor.down.isDown;
-	this.controls.left = Game.Utils.Controls.cursor.left.isDown;
-	this.controls.right = Game.Utils.Controls.cursor.right.isDown;
-	this.controls.action = Game.Utils.Controls.action.isDown;
-
-};
-
-
-/**
- * Do player collisions.
- */
-Game.Prefabs.Player.prototype.physics = function() {
-
-	game.physics.arcade.collide( this, Game.Utils.Map.layer_collision );
 
 };
 
