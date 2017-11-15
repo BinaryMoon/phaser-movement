@@ -48,21 +48,7 @@ Game.Utils.Camera = {
 	 */
 	offset: 30,
 
-
 	smoothness: 10,
-
-
-	/**
-	 * Internal camera position. This uses float values, which are then
-	 * converted into ints for the actual camera position. This helps us to keep
-	 * the camera on whole values whilst applying physics properties to the
-	 * camera settings.
-	 *
-	 * @type {Number}
-	 */
-	x: 0,
-	y: 0,
-
 
 	/**
 	 * Follow a specified target.
@@ -74,11 +60,11 @@ Game.Utils.Camera = {
 		var target_position = this.calculate_position( target );
 
 		if ( Math.abs( game.camera.x - target_position.x ) > 3 ) {
-			target_position.x = Math.smooth( this.x, target_position.x, this.smoothness );
+			target_position.x = Math.smooth( game.camera.x, target_position.x, this.smoothness );
 		}
 
 		if ( Math.abs( game.camera.y - target_position.y ) > 4 ) {
-			target_position.y = Math.smooth( this.y, target_position.y, this.smoothness );
+			target_position.y = Math.smooth( game.camera.y, target_position.y, this.smoothness );
 		}
 
 		this.position( target_position );
@@ -88,12 +74,8 @@ Game.Utils.Camera = {
 
 	position: function( position ) {
 
-		this.x = position.x;
-		this.y = position.y;
-
-		// Always do this so that pixels stay crisp.
-		game.camera.x = Math.floor( this.x );
-		game.camera.y = Math.floor( this.y );
+		game.camera.x = position.x;
+		game.camera.y = position.y;
 
 	},
 
@@ -110,15 +92,15 @@ Game.Utils.Camera = {
 	calculate_position: function( target ) {
 
 		var target_position = {
-			x: this.x,
-			y: this.y
+			x: game.camera.x,
+			y: game.camera.y
 		};
 
-		target_position.x = target.x - Math.round( game.width / 2 );
-		target_position.y = target.y - Math.round( game.height / 2 );
-
-		return target_position;
-
+		return {
+			x: target.x - Math.round( game.width / 2 ),
+			y: target.y - Math.round( game.height / 2 )
+		};
+		
 	},
 
 
@@ -529,7 +511,8 @@ Game.Prefabs.Player = function( game, x, y, group ) {
 	this.controls = [];
 
 	// Make sure the player is enabled.
-	this.enable();
+	this.alive = true;
+	this.body.enable = true;
 
 };
 
@@ -576,20 +559,6 @@ Game.Prefabs.Player.prototype.update = function() {
 
 	Phaser.Sprite.prototype.update.call( this );
 
-	this.position_squared();
-
-};
-
-
-/**
- * Square off the skiers position so that it is always on a round pixel value.
- */
-Game.Prefabs.Player.prototype.position_squared = function() {
-
-	// Update skier display image position.
-	// this.x = Math.round( this.x );
-	// this.y = Math.round( this.y );
-
 };
 
 
@@ -604,50 +573,13 @@ Game.Prefabs.Player.prototype.do_physics = function() {
 		return;
 	}
 
-	this.do_physics_walking();
-
-};
-
-
-/**
- * Do walking physics.
- *
- * @return {[type]} [description]
- */
-Game.Prefabs.Player.prototype.do_physics_walking = function() {
-
-	// Use a reasonably high friction value to allow for a bit of sliding on the snow.
+	// Use a reasonably high friction value to allow for a bit of momentum.
 	// Closer to 1 = more sliding.
 	var friction = 0.925;
 
 	// update velocities.
 	this.body.velocity.x = this.body.velocity.x * friction;
 	this.body.velocity.y = this.body.velocity.y * friction;
-
-};
-
-
-
-/**
- * Disable a skier so it can no longer ski.
- *
- * Also physics don't affect it.
- */
-Game.Prefabs.Player.prototype.disable = function() {
-
-	this.alive = false;
-	this.body.enable = false;
-
-};
-
-
-/**
- * Re-enable a skier so it once again skis the slopes.
- */
-Game.Prefabs.Player.prototype.enable = function() {
-
-	this.alive = true;
-	this.body.enable = true;
 
 };
 
@@ -676,6 +608,7 @@ Game.States.Boot.prototype = {
 		game.renderer.renderSession.roundPixels = true;
 		Phaser.Canvas.setImageRenderingCrisp( game.canvas );
 		game.stage.smoothed = false;
+		game.camera.roundPx = true;
 
 		// update game scale.
 		game.scale.refresh();
@@ -844,8 +777,6 @@ Game.States.World = {
 
 		this.player.x = Game.Utils.Map.player_position.x;
 		this.player.y = Game.Utils.Map.player_position.y;
-
-		game.camera.roundPx = true;
 
 		Game.Utils.Camera.reset( this.player );
 
