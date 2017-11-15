@@ -4,108 +4,21 @@
 var Game = {
 
 	// Game Properties.
-	name: 'Pixel Piste',
+	name: 'Phaser Movement',
 	debug: false,
 	background_color: '#3f2832',
 	desiredFps: false,
-
-	//
-	font_set: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!-_\'#"\\/<>()@',
-	game_state: 'play',
 
 	// Code collections.
 	States: {},
 	Prefabs: {},
 	Utils: {},
-	Plugins: {},
-	JSON: {},
 
 };
 
 // Plugins.
 
 // Utils.
-/**
- * Camera functionality, including the smooth camera position, and ensuring the
- * camera only sits on round pixel values to keep things nice and crisp.
- *
- * @type {Object}
- */
-Game.Utils.Camera = {
-
-	/**
-	 * Constant: Default camera y offset, used for setting player camera
-	 * position.
-	 *
-	 * @type {Number}
-	 */
-	DEFAULT_OFFSET: 30,
-
-	/**
-	 * Camera Y offset.
-	 *
-	 * @type {Number}
-	 */
-	offset: 30,
-
-	smoothness: 10,
-
-	/**
-	 * Follow a specified target.
-	 *
-	 * @param {object} target The object to follow.
-	 */
-	follow: function( target ) {
-
-		var target_position = this.calculate_position( target );
-
-		if ( Math.abs( game.camera.x - target_position.x ) > 3 ) {
-			target_position.x = Math.smooth( game.camera.x, target_position.x, this.smoothness );
-		}
-
-		if ( Math.abs( game.camera.y - target_position.y ) > 4 ) {
-			target_position.y = Math.smooth( game.camera.y, target_position.y, this.smoothness );
-		}
-
-		this.position( target_position );
-
-	},
-
-
-	position: function( position ) {
-
-		game.camera.x = position.x;
-		game.camera.y = position.y;
-
-	},
-
-
-	reset: function( target ) {
-
-		var target_position = this.calculate_position( target );
-
-		this.position( target_position );
-
-	},
-
-
-	calculate_position: function( target ) {
-
-		var target_position = {
-			x: game.camera.x,
-			y: game.camera.y
-		};
-
-		return {
-			x: target.x - Math.round( game.width / 2 ),
-			y: target.y - Math.round( game.height / 2 )
-		};
-		
-	},
-
-
-};
-
 Game.Utils.Controls = {
 
 	cursor: null,
@@ -238,76 +151,6 @@ Game.Utils.Map = {
 		);
 
 		return result;
-
-	},
-
-
-	/**
-	 * Does the specified point overlap the specified tile type on the specified tile layer?
-	 *
-	 * @param  {Int} 	x          X pixel coordinate to check.
-	 * @param  {Int} 	y          Y pixel coordinate to check.
-	 * @param  {Object} tile_layer Tile layer to check against.
-	 * @param  {Int} 	tile_index Tile index we are looking for.
-	 * @return {bool}
-	 */
-	point_overlap: function( x, y, tile_layer, tile_index ) {
-
-		// Make sure the tile index, and layer are set.
-		if ( ! tile_index || ! tile_layer ) {
-			return false;
-		}
-
-		var tile = this.get_tile( x, y, tile_layer );
-
-		if ( ! tile ) {
-			return false;
-		}
-
-		// If the tile index is the desired tile type then return true.
-		if ( tile.index && tile_index === tile.index ) {
-			return true;
-		}
-
-		// If we got this far then it's not a match.
-		return false;
-
-	},
-
-
-	/**
-	 * Get the tile data for the tile at the specified x, y coordinate.
-	 *
-	 * @param  {Number} x          The x position of the object.
-	 * @param  {Number} y          The y position of the object.
-	 * @param  {Object} tile_layer The Game.Utils.Map tile layer object.
-	 * @return {Object}
-	 */
-	get_tile: function( x, y, tile_layer ) {
-
-		// Get tile at specified coordinates.
-		var tiles = tile_layer.getTiles( x, y, 0, 0 );
-
-		// No tiles found?
-		if ( 0 === tiles.length ) {
-			return false;
-		}
-
-		// Since we're checking for a point it will only be one tile.
-		return tiles[0];
-
-	},
-
-
-	/**
-	 * Convert a number into an absolute position.
-	 *
-	 * @param  {Number} position The position of the tile.
-	 * @return {Number}
-	 */
-	tile_coord: function( position ) {
-
-		return Math.floor( position / this.TILE_SIZE ) * this.TILE_SIZE;
 
 	},
 
@@ -741,19 +584,7 @@ Game.States.World = {
 		this.player.x = Game.Utils.Map.player_position.x;
 		this.player.y = Game.Utils.Map.player_position.y;
 
-		Game.Utils.Camera.reset( this.player );
-
-		// game.camera.follow( this.player );
-
-	},
-
-
-	/**
-	 * Update game
-	 */
-	update: function() {
-
-		Game.Utils.Camera.follow( this.player );
+		game.camera.follow( this.player );
 
 	},
 
