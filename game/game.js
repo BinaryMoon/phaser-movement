@@ -144,7 +144,7 @@ Game.Utils.Layers = {
 /**
  * Map object
  * Load and setup tilemaps.
- * Includes all collision and interactin info.
+ * Includes all collision and interaction info.
  */
 Game.Utils.Map = {
 
@@ -157,14 +157,12 @@ Game.Utils.Map = {
 	// Layers.
 	layer: null,
 	layer_details: null,
-	layer_properties: null,
 
-
-	// CONSTANTS
 
 	// Tile dimensions.
 	TILE_SIZE: 8,
 	TILE_HALF_SIZE: 4,
+
 
 	load_world: function( map_name, layers, params ) {
 
@@ -174,9 +172,7 @@ Game.Utils.Map = {
 
 	},
 
-	/**
-	 * Load level
-	 */
+
 	load: function( map_name, layers, params ) {
 
 		// setup map
@@ -190,7 +186,7 @@ Game.Utils.Map = {
 		this.layer = this.map.createLayer( 'tiles' );
 		layers.groupLevelBottom.add( this.layer );
 
-		this.resize_world();
+		this.layer.resizeWorld();
 
 		// Additional details drawn on top of the map to make things look more interesting
 		this.layer_details = this.map.createLayer( 'details' );
@@ -242,42 +238,6 @@ Game.Utils.Map = {
 		);
 
 		return result;
-
-	},
-
-
-	/**
-	 * Resize the world so that it remains central to the camera viewport.
-	 */
-	resize_world: function() {
-
-		// Use the main game tilemap since that will have the most tiles on it.
-		var layer = this.layer.layer;
-
-		// Work out how big the world should be.
-		//
-		// This uses the screen width to ensure the map is centered.
-		// If the map width is less than the screen width then a bit of extra
-		// space is added.
-		var layer_width = Math.max( layer.widthInPixels, game.width ) * game.world.scale.x;
-		var layer_height = Math.max( layer.heightInPixels, game.height ) * game.world.scale.y;
-
-		// The map is offset slightly based on the size of the map against the
-		// screen.
-		//
-		// This ensures the map isn't locked to the top left corner.
-		var offset_x = 0;
-		var offset_y = 0;
-
-		if ( layer_width === game.width ) {
-			offset_x = Math.floor( ( layer_width - layer.widthInPixels ) / -2 );
-		}
-
-		if ( layer_height === game.height ) {
-			offset_y = Math.floor( ( layer_height - layer.heightInPixels ) / -2 );
-		}
-
-		game.world.setBounds( offset_x, offset_y, layer_width, layer_height );
 
 	},
 
@@ -649,7 +609,7 @@ Game.States.Load = {
 	preload: function () {
 
 		// Add a progress bar
-		var progressBar = game.add.sprite( game.world.centerX, game.world.centerY, 'progressBar' );
+		var progressBar = game.add.sprite( game.width / 2, game.height / 2, 'progressBar' );
 		progressBar.anchor.setTo( 0.5, 0.5 );
 		game.load.setPreloadSprite( progressBar );
 
@@ -690,8 +650,11 @@ Game.States.Load = {
 
 };
 
-/* global game, CocoonJS */
-
+/**
+ * Load a map and then display it.
+ *
+ * @type {Object}
+ */
 Game.States.LoadWorld = {
 
 	params: null,
